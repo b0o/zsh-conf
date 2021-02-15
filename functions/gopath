@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+#
+# gopath completes the gopath for bin, pkg, or src
+function gopath() {
+  local base="src"
+  local args=$@
+  while getopts "spb" opt; do
+    case $opt in
+    b)
+      args=$@[2,-1]
+      base="bin"
+      ;;
+    p)
+      args=$@[2,-1]
+      base="pkg"
+      ;;
+    s)
+      args=$@[2,-1]
+      base="src"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      return 1
+      ;;
+    esac
+  done
+  local path="$GOPATH/$base/${args// //}"
+  if [[ ! -e "$path" ]]; then
+    echo "No such file or directory: $path" >&2
+    return 1
+  fi
+  echo ${path%/}
+}

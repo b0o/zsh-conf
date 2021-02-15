@@ -1,0 +1,26 @@
+#!/usr/bin/env zsh
+
+# less-list-cat-file 9000™
+function lll() {
+  [[ -p /dev/stdin ]] && {
+    $PAGER "$@"
+    return $?
+  }
+  local args=(${${1:+$@}:-$PWD})
+  for arg in "${args[@]}"; do
+    [[ -d "$arg" ]] && {
+      ll -- "$arg" || return $?
+      continue
+    }
+    [[ -r "$arg" ]] && isutf8 -q -- "$arg" && {
+      cat -- "$arg" || return $?
+      continue
+    }
+    [[ -e "$arg" ]] || {
+      echo "No such file or directory: $arg" >&2
+      return 2
+    }
+    file -- "$arg" || return $?
+    stat -- "$arg" || return $?
+  done
+}

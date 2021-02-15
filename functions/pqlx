@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+
+# list executable files owned by package
+function pqlx() {
+  pacman -Ql "$@" \
+    | cut -d' ' -f2,2 \
+    | xargs -i stat -c '%A %n' '{}' \
+    | grep --color=never -- '^-\S*\(x\)' \
+    | cut -d' ' -f2,2
+}

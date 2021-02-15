@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+# PATH + fd
+function pf() {
+  fd -tx "$*" $(sed -e 's/:/ /g' <<< "$PATH") 2> /dev/null
+}

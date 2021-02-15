@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+# find/replace
+function replace() {
+  ag -0 -l "$1" "${3:-$PWD}" | xargs -0 sed -ri.bak -e "s/$1/$2/g"
+}

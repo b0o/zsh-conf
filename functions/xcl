@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+
+function xcl() {
+  local lines
+  lines="$(fc -Lln -${1:-1})"
+  xc <<< "$lines"
+  printf 'Copied:\n%s\n' "$lines" >&2
+}

@@ -1,0 +1,197 @@
+#!/usr/bin/env zsh
+
+# autoload -X
+# echo $SECONDS
+
+# local function foo() {
+#   echo "foo" >&2
+# }
+
+# function _progress_bar() {
+  # {
+    local -i width=$COLUMNS
+    local -i terminfo=1
+    local -i overwrite=1
+    local -i head_set=0
+    local msg=""
+    local progress="step"
+    local fill_str="█"
+    local head_str=""
+    local border_left_str="▕"
+    local border_right_str="▏"
+
+    local opt OPTARG
+    local -i OPTIND=0
+    while getopts "hrpTWw:f:H:L:R:" opt; do
+      case "$opt" in
+      h)
+        echo "Usage: $0 [OPTION]... current [total]
+
+Display a progress bar
+
+Options:
+  General
+    -h           show usage information
+    -r           reset terminal and exit
+    -p           output as percentage
+    -T           don't output terminfo capabilities
+    -W           don't overwrite previous progress bar outputs
+    -w <width>   width, in chars, of the entire progress bar (including text)
+
+  Output formatting (note: fill/head should render as a single-width character)
+    -f <str>     bar fill      [default: $fill_str]
+    -H <str>     bar head      [default: $head_str]
+    -L <str>     left border   [default: $border_left_str]
+    -R <str>     right border  [default: $border_right_str]
+
+$0 is intended to be called incrementally as the progress changes. It will
+overwrite previously output bars as long as the -W option is not supplied.
+
+If supported by the terminal, the text cursor will be hidden upon a 'current'
+value of less than 1, and re-enabled upon a 'current' value greater or
+equal to 'total'. This behavior can be disabled with the -T option.
+
+Examples:
+  echo 'basic progress' >&2
+  for i in \$(seq 0 1337); do
+    _progress_bar \$i 1337
+    sleep 0.002
+  done
+
+  echo 'basic progress (percent)' >&2
+  for i in \$(seq 0 325); do
+    _progress_bar -p \$i 325
+    sleep 0.01
+  done
+
+  echo 'colored progress' >&2
+  for i in \$(seq 0 42); do
+    _progress_bar -L \"\${fg_no_bold[cyan]}▕\" -R \"▏\${reset_color}\" \$i 42
+    sleep 0.1
+  done
+
+  echo 'colored progress (powerline)' >&2
+  for i in \$(seq 0 122); do
+    _progress_bar -L \"\${fg_no_bold[cyan]}▕\" -R \"▏\${reset_color}\" -H '\\\\ue0b0' \$i 122
+    sleep 0.05
+  done
+
+  echo 'flamin progress (powerline)' >&2
+  for i in \$(seq 0 100)
+    do _progress_bar -L \"\${fg_no_bold[magenta]}▕\" -R \"▏\${reset_color}\" -H '\\\\ue0c0' \$i 100
+    sleep 0.05
+  done
+
+  echo 'fireball (powerline)' >&2
+  for i in \$(seq 0 200); do
+    _progress_bar -p -L \"\${fg_no_bold[magenta]}▕\" -R \"▏\${reset_color}\" -f ' ' -H '\\\\ue0c2\\\\ue0b4' \$i 200
+    sleep 0.005
+  done
+
+  # (powerline: https://github.com/ryanoasis/powerline-extra-symbols)
+
+License:
+  Copyright 2020-$(date +%Y) Maddison Hellstrom (https://github.com/b0o)
+  GPL-3.0 License (https://www.gnu.org/licenses/gpl-3.0.txt)" >&2
+        return 0
+        ;;
+      r)
+        [[ -n "$terminfo[civis]" && -n "$terminfo[cvvis]" ]] && echoti cvvis
+        return 0
+        ;;
+      p)
+        progress="percent"
+        ;;
+      T)
+        terminfo=0
+        ;;
+      w)
+        width=$OPTARG
+        ;;
+      W)
+        overwrite=0
+        ;;
+      f|H|L|R)
+        # local char="$(print "$OPTARG")"
+        local char="$OPTARG"
+        case "$opt" in
+          f)
+            fill_str="$char"
+            ;;
+          H)
+            head_set=1
+            head_str="$char"
+            ;;
+          L)
+            border_left_str="$char"
+            ;;
+          R)
+            border_right_str="$char"
+            ;;
+        esac
+        ;;
+      \?)
+        return 1
+        ;;
+      esac
+    done
+
+    shift $((OPTIND - 1))
+
+    if [[ -z "$head_str" && $head_set -eq 0 ]]; then
+      head_str="$fill_str"
+    fi
+
+    if [[ $# -lt 1 || $# -gt 2 ]]; then
+      echo "$0 error: expected 1 or 2 arguments, got $#" >&2
+      return 1
+    fi
+
+    local -i current_step=$1
+    local -i total_steps=${2:-100}
+    local -F float_total_steps=$total_steps
+    local -F float_percent=$((current_step / float_total_steps))
+    local -i percent=$((float_percent * 100))
+    local -a fmt_args=()
+
+    local -i strlen_progress=0
+    local -i padding_progress=0
+    local fmt_progress=""
+    if [[ $progress == "percent" ]]; then
+      padding_progress=3
+      strlen_progress=4
+      fmt_progress="%${padding_progress}d%%"
+      fmt_args+=("$percent")
+    elif [[ $progress == "step" ]]; then
+      padding_progress=${#total_steps[@]}
+      strlen_progress=$((1 + ${#total_steps[@]} * 2))
+      fmt_progress="%${padding_progress}d/%d"
+      fmt_args+=("$current_step" "$total_steps")
+    fi
+
+    local -i bar_width=$(( width - 2 - strlen_progress ))
+    local fmt="${border_left_str}%-${bar_width}s${border_right_str}$fmt_progress"
+
+    local -i bar_fill_width=$(( float_percent * bar_width ))
+    local bar_fill=""
+    if [[ $bar_fill_width -gt 1 ]]; then bar_fill="$(printf "${fill_str}%.0s" {1..$((bar_fill_width - 1))})"; fi
+    if [[ $bar_fill_width -gt 0 ]]; then
+      if [[ $current_step -ge $total_steps ]]; then
+        bar_fill+="$fill_str"
+      else
+        bar_fill+="$head_str"
+      fi
+    fi
+    fmt_args=("$bar_fill" "${fmt_args[@]}")
+
+    if [[ $overwrite -eq 1 ]]; then
+      fmt="\\r$fmt"
+    fi
+
+    if [[ $terminfo -eq 1 && $current_step -le 1 && -n "$terminfo[civis]" && -n "$terminfo[cvvis]" ]]; then echoti civis; fi
+    print -nf "$fmt" -- "${fmt_args[@]}" >&2
+    if [[ $terminfo -eq 1 && $current_step -ge $total_steps && -n "$terminfo[civis]" && -n "$terminfo[cvvis]" ]]; then echoti cvvis; fi
+  # } || {
+  #   echo -e '\r'
+  # }
+# }

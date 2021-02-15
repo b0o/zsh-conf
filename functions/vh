@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+# vim help
+function vh() {
+  nvim -c ":H $*"
+}

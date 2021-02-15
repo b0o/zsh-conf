@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+
+# list manual pages owned by package
+# depends on MANPATH
+function pqlm() {
+  [[ $# -gt 0 ]] || return 1
+  local manpath="${MANPATH:-$(manpath)}"
+  local -a manpaths
+  manpaths=($(sed -e 's/:/ /g' <<<"$MANPATH"))
+  local f rp m
+  local -i ok
+  for f in $(pacman -Ql "$@" | cut -d' ' -f 2,2); do
+    [[ -f "$f" ]] || continue
+    ok=0
+    for m in "${manpaths[@]}"; do
+      rp="$(realpath -e --relative-to="$m" "$f")"
+      [[ $rp =~ ^../ ]] || {
+        ok=1
+        break
+      }
+    done
+    [[ $ok -eq 1 ]] || continue
+    echo "$f"
+  done
+}

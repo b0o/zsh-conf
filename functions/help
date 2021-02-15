@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+function help() {
+  local u="$(rawurlencode "$@")"
+  ub curl "https://cheat.sh/$u"
+}

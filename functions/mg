@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+# man + rg
+function mg() {
+  local manpath="${MANPATH:-$(manpath)}"
+  local -a manpaths=()
+  if [[ -p /dev/stdin ]]; then
+    local f
+    while read -r f; do
+      manpaths+=("$f")
+    done
+  else
+    manpaths=($(sed -e 's/:/ /g' <<<"$manpath"))
+  fi
+  rg -LSz "$*" "${manpaths[@]}" 2>/dev/null
+}

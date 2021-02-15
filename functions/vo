@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+
+# vim output: echo result of editing session to stdout
+# (modifications are not saved to original file)
+function vo() {
+  t="$(mktemp -tu vim-out.XXXXXX)"
+  vim -c ":w $t" -c ":e $t" "$@"
+  \cat "$t"
+  unlink "$t" &>/dev/null || true
+}

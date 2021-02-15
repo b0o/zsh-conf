@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+# run a command and copy the command plus the output, e.g.
+#   xcc echo foo bar
+# will copy
+#   $ echo foo bar
+#   foo bar
+function xcc() {
+  local str="$ $*"$'\n'
+  str+="$(eval "$*")"
+  command echo "$str" >&2
+  xc "$str"
+}

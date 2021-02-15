@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+# backup helper
+function bup() {
+  local p="${BACKUPPATH:-$HOME/backup}"
+  if [[ ! -e "$p" ]]; then
+    mkdir -p "$p" || return 1
+  elif [[ ! -d "$p" ]]; then
+    echo "BACKUPPATH exists but is not a directory: $p" >&2
+    return 1
+  fi
+
+  for arg in "$@"; do
+    local dest="${p}/$(basename "$arg")_$(date --rfc-3339=date)"
+    if [[ -e "$dest" ]]; then
+      local last="$(find "$p" -regex "${dest}__[0-9]*" | sed -e "s/^.*__//" | sort -n | tail -1)"
+      dest+="$(printf "%s__%d" "$base" $((last + 1)))"
+    fi
+
+    cp "$arg" "$dest" || return 1
+    echo "backed up $arg to $dest"
+  done
+}

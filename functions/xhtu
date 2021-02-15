@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+# html(Entity) to unicode (copy to clipboard)
+function xhtu() {
+  local res
+  res="$(htu "$@")"
+  xc <<< "$res"
+  printf 'Copied:\n%s\n' "$res" >&2
+}

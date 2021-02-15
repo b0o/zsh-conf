@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+
+# ix.io pastebin
+function ix() {
+  [ -t 0 ] && {
+    local filename="$1"
+    shift
+    [ "$filename" ] && {
+      curl -F f:1=@"$filename" $* ix.io
+      return
+    }
+    echo "^C to cancel, ^D to send."
+  }
+  curl -F f:1='<-' $* ix.io
+}

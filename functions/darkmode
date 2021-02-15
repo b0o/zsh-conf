@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+
+function darkmode() {
+  local theme_light="${THEME_LIGHT:-Adwaita}"
+  local theme_dark="${THEME_DARK:-Adwaita-dark}"
+  local theme="$theme_dark"
+  local cmd="${1:-toggle}"
+  case "$cmd" in
+    t*)
+      local cur
+      cur="$(gsettings get org.gnome.desktop.interface gtk-theme)" || return 1
+      if [[ "$cur" == "'$theme_dark'" ]]; then
+        theme="$theme_light"
+      fi
+      ;;
+    l*) ;&
+    day)
+      theme="$theme_light"
+      ;;
+    d*) ;&
+    n*)
+      theme="$theme_dark"
+      ;;
+    *)
+      theme="$cmd"
+  esac
+  gsettings set org.gnome.desktop.interface gtk-theme "$theme"
+}

@@ -1,0 +1,40 @@
+#!/usr/bin/env zsh
+
+function gig() {
+  local write=0
+  local opt OPTARG
+  local -i OPTIND
+  while getopts "w-" opt "$@"; do
+    case "$opt" in
+      w)
+        write=1
+        ;;
+      -)
+        break
+        ;;
+      *)
+        return 1
+        ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  if [[ $write -eq 1 ]] && ! git status &>/dev/null; then
+    echo "fatal: not a git repository" >&2
+    return 1
+  fi
+
+  q="$(echo "$@" | tr " " ",")"
+  g="$(curl -f -L -s https://www.gitignore.io/api/$q)"
+  if [[ $? != 0 ]]; then
+    echo "Not found: $q" >&2
+    return 1
+  fi
+
+  if [[ $write -eq 1 ]]; then
+    echo "$g" >> ./.gitignore
+    echo "Updated .gitignore with rules for $*" >&2
+  else
+    echo "$g"
+  fi
+}

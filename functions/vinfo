@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+function vinfo() {
+  nvim -c ":set noswapfile | Vinfo $1"
+}

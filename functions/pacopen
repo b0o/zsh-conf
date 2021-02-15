@@ -1,0 +1,7 @@
+#!/usr/bin/env zsh
+
+function pacopen() {
+  local url="$(pacman -Si "$1" | awk '/^URL/{print $3}')"
+  echo "$1 $url" >&2
+  xdg-open "$url" > /dev/null 2>&1
+}

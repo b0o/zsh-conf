@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+
+## smartie-hands
+function _smart_l() {
+  local cmd="${1:-lll}"
+  local p=""
+  if [[ -n "$BUFFER" ]]; then
+    zmodload -e zsh/pcre || zmodload zsh/pcre
+    pcre_compile -- '^(?U)((.*\s+)*)((\S|\\\s)+)$'
+    if [[ -n "$LBUFFER" ]] && pcre_match -a mat -- "$LBUFFER"; then
+      # Cursor is right-adjacent to some text
+      p="${mat[3]//(#m)\\/}"
+    fi
+    pcre_compile -- '^((\\\s|\S)+)((\s+.*)*)$'
+    if [[ -n "$RBUFFER" ]] && pcre_match -a mat -- "$RBUFFER"; then
+      # Cursor is left-adjacent to some text
+      p="${p}${mat[1]//(#m)\\/}"
+    fi
+  fi
+  printf '\n'
+  p=${p:-$PWD}
+  if [[ -e "$p" ]]; then
+    $cmd "$p"
+  else
+    zle menu-complete
+  fi
+  zle reset-prompt
+}

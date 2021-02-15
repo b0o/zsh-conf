@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+
+function _xc() {
+  local dir="$1"
+  if [[ "$dir" =~ ^-(o|i)$ ]]; then
+    shift
+  else
+    dir="-i"
+  fi
+
+  if [[ -v WAYLAND_DISPLAY ]]; then
+    if [[ "$dir" == "-o" ]]; then
+      wl-paste "$@"
+    else
+      wl-copy -t text/plain -n "$@"
+    fi
+  elif [[ -v DISPLAY ]]; then
+    if [[ "$dir" == "-o" ]]; then
+      xclip -o -selection clipboard "$@"
+    else
+      xclip -selection clipboard "$@"
+    fi
+  else
+    echo 'xc: no graphical session detected' >&2
+    return 1
+  fi
+}

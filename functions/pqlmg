@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+
+# usage: pqlmg pat package [package ..]
+# search manual pages owned by package for pat
+# depends on MANPATH
+function pqlmg() {
+  [[ $# -gt 1 ]] || return 1
+  local pat="$1"
+  shift
+  pqlm "$@" | mg "$pat"
+}

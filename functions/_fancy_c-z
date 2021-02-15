@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+
+# fancy-ctrl-z
+# inspired by fancy-ctrl-z from oh-my-zsh
+function _fancy_c-z () {
+  if [[ $#BUFFER -eq 0 ]]; then
+    if [[ $1 == "-b" ]]; then
+      BUFFER=" bg"
+    else
+      BUFFER=" fg"
+    fi
+    zle accept-line
+  else
+    zle push-input
+    zle clear-screen
+  fi
+}

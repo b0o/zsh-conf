@@ -1,0 +1,88 @@
+#!/usr/bin/env zsh
+
+function penv() {
+  local -i quiet=0
+  local -i pgrep=0
+  local -i parents=0
+  local env_pat=""
+  local -i OPTIND
+  local opt OTPARG
+  while getopts "hqgPp:" opt "$@"; do
+    case $opt in
+    h)
+      /bin/cat << EOF >&2
+Usage: $0 [OPTION]... pid
+       $0 -g [OPTION]... pattern
+
+Print environment variables for running processes
+
+Options:
+  -h           show usage information
+  -q           don't print metadata about each process
+  -g           search processes by name with pgrep
+  -P           include parents of each process
+  -p <pat>     only show variables matching <pat>
+EOF
+      return 0
+      ;;
+    q)
+      quiet=1
+      ;;
+    g)
+      pgrep=1
+      ;;
+    P)
+      parents=1
+      ;;
+    p)
+      env_pat="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      return 1
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  local -i pid
+  local -a pids=()
+
+  if [[ $pgrep -eq 1 ]]; then
+    local pgrep_pat
+    for pgrep_pat in "$@"; do
+      while read -r pid; do
+        pids+=($pid)
+      done <<< "$(pgrep "$pgrep_pat")"
+    done
+  else
+    pids=("$@")
+  fi
+
+  if [[ $parents -eq 1 ]]; then
+    local -a ppids=()
+    for pid in "${pids[@]}"; do
+      while [[ $pid -gt 1 ]]; do
+        pid=$(ps --no-headers --format=ppid $pid) || break
+        ppids+=($pid)
+      done
+    done
+    pids+=("${ppids[@]}")
+  fi
+
+  while read -r pid; do
+    if [[ $quiet -eq 0 ]]; then
+      echo >&2
+      ps "$pid" | sed 's/^   //' >&2
+      ((${pipestatus[1]} == 0)) || continue
+      echo >&2
+    fi
+    sed 's/\x0/\n/g' "/proc/$pid/environ" | {
+      if [[ -n "$env_pat" ]]; then
+        grep "$env_pat"
+      else
+        >&1
+      fi
+    }
+  done <<< "$(printf '%s\n' "${pids[@]}" | sort --unique --reverse --numeric-sort)"
+}

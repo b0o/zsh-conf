@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+
+# smart wrap
+function _smart_wrap() {
+  zmodload zsh/pcre
+  pcre_compile -- '^((.*\s+)*)(\S+)$'
+  if [[ -n "$LBUFFER" ]] && pcre_match -a mat -- "$LBUFFER"; then
+    LBUFFER="${mat[1]}${1}${mat[3]}"
+  else
+    LBUFFER="${LBUFFER}${1}"
+  fi
+  pcre_compile -- '^(\S+)((\s+.*)*)$'
+  if [[ -n "$RBUFFER" ]] && pcre_match -a mat -- "$RBUFFER"; then
+    RBUFFER="${mat[1]}${2}${mat[2]}"
+  else
+    RBUFFER="${2}${RBUFFER}"
+  fi
+}

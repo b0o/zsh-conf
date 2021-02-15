@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+# query package that owns a given command
+function pqoc() {
+  local p
+  for c in "$@"; do
+    p="$(command -v "$c")" || {
+      echo "error: not found in path: $c" >&2
+      return 1
+    }
+    pacman -Qo "$p"
+  done
+}

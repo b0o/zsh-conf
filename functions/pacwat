@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+function pacwat() {
+  c="$*"
+  t="$(type -w "$*" | awk '{ print $NF }')" || return 1
+  if [[ $t == "alias" ]]; then
+    c="$(where -p "$c")"
+  elif [[ $t != "command" ]]; then
+    echo "not a command: $c" >&2
+    return 1
+  fi
+  w="$(which "$c")" || return 1
+  pacman -Qo "$w"
+}

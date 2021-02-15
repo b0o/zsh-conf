@@ -1,0 +1,7 @@
+#!/usr/bin/env zsh
+
+# speed read URL
+function spreed() {
+  [[ $# -gt 0 ]] || return 1
+  artext "$1" | tspreed "${@:2}"
+}

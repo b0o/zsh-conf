@@ -1,0 +1,80 @@
+#!/usr/bin/env zsh
+
+# random number generation
+function rand() {
+  declare -i x=10  # radix/base
+  declare -i n=1   # count
+
+  local shuf_repeat="-r"
+  local rand_source="/dev/urandom"
+
+  local usage=
+
+  local -i OPTIND
+  local opt OTPARG
+  while getopts "hub:n:s:" opt; do
+    case $opt in
+      h)
+        echo "Usage: $0 [OPTION]... [min] max
+
+Generate random numbers
+
+Options:
+  -h           show usage information
+  -u           generate unique numbers
+  -b <base>    treat input/output as base <base> (default: $x)
+  -n <count>   generate <count> numbers          (default: $n)
+  -s <file>    get random bytes from <file>      (default: $rand_source)" >&2
+        return 0
+        ;;
+      u)
+        shuf_repeat=""
+        ;;
+      b)
+        x=$OPTARG
+        ;;
+      n)
+        n=$OPTARG
+        ;;
+      s)
+        rand_source=$OPTARG
+        ;;
+      \?)
+        echo "Invalid option: -$OPTARG" >&2
+        return 1
+        ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  declare -i $x a=0
+  declare -i $x b=$(($x#10 - 1))
+  if [[ $# -eq 1 ]]; then
+    b=$(($x#$1))
+  elif [[ $# -eq 2 ]]; then
+    a=$(($x#$1))
+    b=$(($x#$2))
+  fi
+
+  declare -f fmt_num() {
+    local fmt=${1:-'%s'}
+    awk -v "fmt=$fmt" '{ gsub(/^[[:digit:]]+#/, ""); s = sprintf(fmt, $0); gsub(/ /, "0", s); print s }'
+  }
+
+  local m=$(fmt_num<<<$b)
+  declare -i l=${#m}
+
+  shuf --random-source="$rand_source" $shuf_repeat -i$(([#10]a))-$(([#10]$b)) -n$n | {
+    declare -i 8 i
+    while read -r i; do
+      print $(([#$x]$i)) | {
+        if [[ $x -eq 10 ]]; then
+          fmt_num "%s"
+        else
+          fmt_num "%0${l}s"
+        fi
+      }
+    done
+  }
+}
+

@@ -1,0 +1,44 @@
+#!/usr/bin/env zsh
+
+function qr() {
+  local str="$*"
+  local -a args=()
+  if [[ -p /dev/stdin || -s /dev/stdin ]]; then
+    str=""
+    args=($@)
+    local l
+    while read -r l; do
+      str+="$(printf '%s\n' "$l")"
+    done
+  fi
+  qrencode -t ANSI ${args[@]} "$str" | \
+    awk -v "str=$str" -v "c=${bg_no_bold[white]}${fg_bold[black]}" -v "rc=${reset_color}" \
+    "$(<<"EOF"
+      {
+        print $0
+      }
+      NR == 1 {
+        llen = length(gensub("\\S", "", "g", $0))
+        split(str, lines, "\n")
+        res = ""
+        for(i = 0; i < length(lines); i++) {
+          s = lines[i]
+          slen = length(s)
+          if (slen > llen) {
+            s = substr(s, 0, llen - 3) "..."
+            slen = length(s)
+          }
+          h = (llen - slen) / 2;
+          if (h % 1 != 0) {
+            h = int(h)
+            s = s " "
+          }
+          res = res sprintf("%" h "s%s%" h "s\n", "", s, "")
+        }
+      }
+      END {
+        printf("%s%s%s", c, res, rc)
+      }
+EOF
+    )"
+}

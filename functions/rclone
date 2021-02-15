@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+# misc
+function rclone() {
+  [[ ! -v RCLONE_CONFIG_PASS ]] && {
+    echo -e "enter rclone config password\nwarning: password will be available in ENV as RCLONE_CONFIG_PASS for this shell" >&2
+    printf "password: " && read -rs RCLONE_CONFIG_PASS && printf "\n" || {
+      return 1
+    }
+    export RCLONE_CONFIG_PASS
+  }
+  /usr/bin/rclone $@
+}

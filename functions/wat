@@ -1,0 +1,47 @@
+#!/usr/bin/env zsh
+
+function wat() {
+  local -i short=1
+  [[ $1 == "-v" ]] && {
+    short=0
+    shift
+  }
+
+  local -a cmds=(
+    "which"
+    "where"
+    "whereis"
+    "command"
+    "whence"
+    "whatis"
+    "pacwat"
+  )
+
+  local -a args=(
+    "--"
+    "--"
+    " "
+    "-V --"
+    ""
+    ""
+    ""
+  )
+
+  for i in $(seq ${#cmds[@]}); do
+    c="${cmds[$i]}"
+    ca="${args[$i]}"
+    echo "${fg_no_bold[cyan]}${c} $(sed -e 's/\s*--$//' <<<"$ca")${reset_color}"
+    for a in $@; do
+      [[ $# -gt 1 ]] && {
+        printf '%s\t' "${fg_no_bold[magenta]}${a}${reset_color}"
+      }
+      IFS=$'\n' local -a out=($(eval "$c $ca $a" 2>&1))
+      if [[ $short -eq 1 && ${#out[@]} -gt 1 ]]; then
+        echo "${out[1]} ${fg_no_bold[yellow]}…${reset_color}"
+      else
+        printf '%s\n' "${out[@]}" | sed -e 's/\t/  /g'
+      fi
+    done | column -ts "$(print '\t')"
+  done
+}
+

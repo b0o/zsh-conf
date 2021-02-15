@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+
+function gcl() {
+  local -a opts=("--recurse-submodules")
+  local -a args=()
+  for item in "$@"; do
+    [[ "$item" =~ ^- ]] && {
+      opts+=("$item")
+      continue
+    }
+    args+=("$item")
+  done
+
+  if (( ${#args[@]} == 1 )); then
+    local repo="${args[1]}"
+    local dest="${GIT_PROJECTS_DIR:-$HOME/git}/$(basename "$repo")"
+    args=("$repo" "$dest")
+
+  elif (( ${#args[@]} == 2 && ${args[2]} == '-' )); then
+    local repo="${args[1]}"
+    local dest="$(basename "$repo")"
+    args=("$repo" "$dest")
+  fi
+
+  git clone "${opts[@]}" "${args[@]}" >&2
+  echo "$dest"
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+# html(Entity) to unicode
+function htu() {
+  local e
+  for e in "${@}"; do
+    recode html..utf8 <<<"&$e;"
+  done
+}
