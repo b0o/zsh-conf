@@ -1,0 +1,89 @@
+#!/usr/bin/env zsh
+
+# Copyright (C) 2021 Maddison Hellstrom <https://github.com/b0o>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+function checksum() {
+  if (( $# == 0 )); then
+    echo "Expected argument" >&2
+    return 1
+  fi
+
+  if (( ( $# % 2 ) != 0 )); then
+    echo "Expected even number of arguments" >&2
+    return 1
+  fi
+
+  local -A algos=(
+    [md5]=1
+    [sha1]=1
+    [sha224]=1
+    [sha256]=1
+    [sha512]=1
+  )
+
+  echo
+
+  local -i fail=0
+  local -i pass=0
+
+  local -i c=0
+  local -i i
+  for i in {1..$#..2}; do
+    local f="${@[$i]}"
+
+    local ss="${@[$((i + 1))]}"
+
+    local s
+    for s in $(tr ',' '\n' <<< "$ss"); do
+      if ! [[ "$s" =~ : ]]; then
+        echo "expected hash of form algo:hash, e.g. md5:d3b07384d113edec49eaa6238ad5ff00" >&2
+        return 1
+      fi
+
+      local algo="${s//:*}"
+
+      if [[ -z "$algo" || ! -v "algos[$algo]" ]]; then
+        echo "invalid hash algorithm: $algo" >&2
+        return 1
+      fi
+
+      local he="${s//*:}"
+
+      local res="$("${algo}sum" "$f")" || return $?
+      local ha="${res// *}"
+
+      if [[ "$ha" == "$he" ]]; then
+        echo "PASS: ${algo}sum $f"
+        pass=$((pass + 1))
+      else
+        echo "FAIL: ${algo}sum $f"
+        fail=$((fail + 1))
+      fi
+      echo "  Expected: $algo:$he"
+      echo "  Actual:   $algo:$ha"
+      echo
+    done
+
+  done
+
+  echo "Result: $pass / $((fail + pass)) passed"
+  if [[ $fail -eq 0 ]]; then
+    echo "ALL PASSED"
+  else
+    echo "FAIL"
+  fi
+  return $c
+}
